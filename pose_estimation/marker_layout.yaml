@@ -1,0 +1,39 @@
+marker_size_cm: 10.0
+coordinate_unit: cm
+corner_order: [top_left, top_right, bottom_right, bottom_left]
+
+markers:
+  56:
+    corners_3d:
+      - [0.0, 125.0, 0.0]     # top-left
+      - [10.0, 125.0, 0.0]    # top-right
+      - [10.0, 115.0, 0.0]    # bottom-right
+      - [0.0, 115.0, 0.0]     # bottom-left
+
+  50:
+    corners_3d:
+      - [0.0, 80.0, 0.0]      # top-left
+      - [10.0, 80.0, 0.0]     # top-right
+      - [10.0, 70.0, 0.0]     # bottom-right
+      - [0.0, 70.0, 0.0]      # bottom-left
+
+  55:
+    corners_3d:
+      - [75.5, 80.0, 0.0]     # top-left
+      - [85.5, 80.0, 0.0]     # top-right
+      - [85.5, 70.0, 0.0]     # bottom-right
+      - [75.5, 70.0, 0.0]     # bottom-left
+
+  51:
+    corners_3d:
+      - [75.5, 10.0, 0.0]     # top-left
+      - [85.5, 10.0, 0.0]     # top-right
+      - [85.5, 0.0, 0.0]      # bottom-right
+      - [75.5, 0.0, 0.0]      # bottom-left
+
+  53:
+    corners_3d:
+      - [0.0, 5.0, 25.5]      # top-left
+      - [10.0, 5.0, 25.5]     # top-right
+      - [10.0, -5.0, 25.5]    # bottom-right
+      - [0.0, -5.0, 25.5]     # bottom-left

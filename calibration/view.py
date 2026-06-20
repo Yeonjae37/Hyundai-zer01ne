@@ -5,8 +5,9 @@ import sys
 import time
 import threading
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 RTSP_TEMPLATE = os.environ["RTSP_TEMPLATE"]
 
 
