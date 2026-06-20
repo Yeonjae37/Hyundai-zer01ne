@@ -4,10 +4,11 @@ import glob
 import os
 import sys
 
-BOARD_COLS = 7    # inner corners horizontally (8x11 squares)
-BOARD_ROWS = 10   # inner corners vertically
-SQUARE_MM  = 30   # physical square size in millimetres
-MIN_FRAMES = 10
+BOARD_COLS  = 7     # inner corners horizontally
+BOARD_ROWS  = 10    # inner corners vertically
+SQUARE_MM   = 30    # physical square size in mm
+MIN_FRAMES  = 10
+TARGET_SIZE = (2560, 1440)   # (width, height)
 
 
 def find_corners(gray, board_size):
@@ -29,47 +30,51 @@ def calibrate(cam_num: str):
         print(f"No images found in {frame_dir}")
         sys.exit(1)
 
-    print(f"Found {len(images)} images in {frame_dir}")
+    print(f"Found {len(images)} images  |  target: {TARGET_SIZE[0]}x{TARGET_SIZE[1]}")
 
     objp = np.zeros((BOARD_ROWS * BOARD_COLS, 3), np.float32)
     objp[:, :2] = np.mgrid[0:BOARD_COLS, 0:BOARD_ROWS].T.reshape(-1, 2)
     objp *= SQUARE_MM
 
     obj_pts, img_pts = [], []
-    img_size = None
+    skipped = 0
 
     for path in images:
         gray = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY)
+        if gray.shape[::-1] != TARGET_SIZE:
+            skipped += 1
+            continue
         found, corners = find_corners(gray, board_size)
         if found:
             obj_pts.append(objp)
             img_pts.append(corners)
-            if img_size is None:
-                img_size = gray.shape[::-1]
 
-    print(f"Valid frames: {len(obj_pts)} / {len(images)}")
+    if skipped:
+        print(f"Skipped {skipped} images (resolution mismatch)")
+    print(f"Valid frames: {len(obj_pts)} / {len(images) - skipped}")
 
     if len(obj_pts) < MIN_FRAMES:
-        print(f"Not enough valid frames (need >= {MIN_FRAMES}). Capture more images.")
+        print(f"Not enough valid frames (need >= {MIN_FRAMES})")
         sys.exit(1)
 
-    rms, K, dist, _, _ = cv2.calibrateCamera(obj_pts, img_pts, img_size, None, None)
+    rms, K, dist, _, _ = cv2.calibrateCamera(
+        obj_pts, img_pts, TARGET_SIZE, None, None
+    )
 
-    print(f"\nRMS reprojection error : {rms:.4f} px")
-    print(f"Intrinsic matrix (K)  :\n{K}")
-    print(f"Distortion coefficients: {dist.ravel()}")
+    print(f"\nRMS error : {rms:.4f} px")
+    print(f"K :\n{K}")
+    print(f"dist: {dist.ravel()}")
 
     os.makedirs(out_dir, exist_ok=True)
-
     np.savez(os.path.join(out_dir, "intrinsics.npz"),
-             K=K, dist=dist, rms=rms, img_size=img_size)
+             K=K, dist=dist, rms=rms, img_size=np.array(TARGET_SIZE))
 
     fs = cv2.FileStorage(os.path.join(out_dir, "intrinsics.yaml"), cv2.FILE_STORAGE_WRITE)
     fs.write("K", K)
     fs.write("dist", dist)
     fs.write("rms", rms)
-    fs.write("img_width",  img_size[0])
-    fs.write("img_height", img_size[1])
+    fs.write("img_width",  TARGET_SIZE[0])
+    fs.write("img_height", TARGET_SIZE[1])
     fs.release()
 
     print(f"\nSaved -> {out_dir}/intrinsics.{{npz,yaml}}")
@@ -77,6 +82,6 @@ def calibrate(cam_num: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(__doc__)
+        print(f"Usage: python3 {os.path.basename(__file__)} <cam_num>")
         sys.exit(1)
     calibrate(sys.argv[1])
